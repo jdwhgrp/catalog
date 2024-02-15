@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Live Data Search</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #search {
+            padding: 8px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        #clear-search {
+            padding: 8px 12px;
+            border-radius: 5px;
+            background-color: #ccc;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .filter-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .filter {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+
+        .card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-gap: 20px;
+        justify-items: center;
+        padding: 0 20px;
+}
+    .card {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: white;
+    margin: 10px;
+    transition: transform 0.3s ease;
+    min-width: 250px; /* Set a minimum width for the cards */
+}
+@media screen and (max-width: 950px) {
+    .card-container {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .card {
+        min-width: 150px; /* Adjust minimum width for smaller screens */
+    }
+}
+
+        .card:hover {
+            transform: scale(1.05); /* Scale up when hovered */
+        }
+
+        .card p {
+            margin: 5px 0;
+        }
+
+        .loading {
+            text-align: center;
+            font-style: italic;
+        }
+    </style>
+    <script>
+        $(document).ready(function(){
+    $('#search').keyup(function(){
+        filterResults();
+    });
+
+    $('#clear-search').click(function(){
+        $('#search').val('');
+        filterResults();
+    });
+
+    $('.filter').change(function(){
+        filterResults();
+    });
+
+    $('.card-container').on('click', '.card', function() {
+        var title = $(this).find('p:first').text().split(": ")[1];
+        // Simulating availability check
+        var isAvailable = Math.random() < 0.5; // Randomly assigning availability
+
+        if (isAvailable) {
+            alert("The book '" + title + "' is available.");
+        } else {
+            alert("The book '" + title + "' is borrowed.");
+        }
+    });
+
+    function filterResults() {
+    var query = $('#search').val();
+    var criteria = {
+        'subject': $('#subject').val(),
+        'author': $('#author').val(),
+        'publisher': $('#publisher').val(),
+        'place': $('#place').val(),
+        'isbn': $('#isbn').val().trim()
+    };
+
+    $('#result').html('<div class="loading">Loading...</div>');
+
+    $.ajax({
+        url:"fetch.php",
+        method:"POST",
+        data:{query:query, criteria:criteria},
+        success:function(data)
+        {
+            $('#result').html('');
+            if(data.trim() != ''){
+                var result = JSON.parse(data);
+                result.forEach(function(item){
+                    var card = $("<div class='card'></div>");
+                    card.append("<p>Title: " + item['Title'] + "</p>");
+                    card.append("<p>Author: " + item['Author'] + "</p>");
+                    card.append("<p>Publisher: " + item['Publisher'] + "</p>");
+                    card.append("<p>Place: " + item['Place'] + "</p>");
+                    card.append("<p>ISBN: " + item['ISBN'] + "</p>");
+                    $('#result').append(card);
+                });
+            } else {
+                $('#result').html("<p>No books found</p>");
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#result').html("<p>Error: " + error + "</p>");
+        }
+    });
+}
+
+});
+
+    </script>
+</head>
+<body>
+    <h2>Book Live Data Search</h2>
+    <div id="search-container">
+        <input type="text" id="search" placeholder="Search books..." />
+        <button id="clear-search">Clear</button>
+    </div>
+    <div class="filter-container">
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" class="filter" />
+        <label for="author">Author:</label>
+        <input type="text" id="author" class="filter" />
+        <label for="publisher">Publisher:</label>
+        <input type="text" id="publisher" class="filter" />
+        <label for="place">Place:</label>
+        <input type="text" id="place" class="filter" />
+        <label for="isbn">ISBN:</label>
+        <input type="text" id="isbn" class="filter" />
+
+    </div>
+    <div id="result" class="card-container"></div>
+</body>
+</html>
