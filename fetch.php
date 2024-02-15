@@ -2,15 +2,17 @@
 // Database connection
 $conn = new mysqli('localhost', 'root', '', 'catalog');
 
-if($conn->connect_error){
+if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
 // Fetch data based on search query and filtering criteria
-if(isset($_POST['query'])){
+if (isset($_POST['query'])) {
+    // Retrieve search query and criteria from POST data
     $search = $_POST['query'];
     $criteria = $_POST['criteria'];
 
+    // Construct SQL query
     $sql = "SELECT * FROM catalogfinal WHERE 
             (Subject LIKE '%$search%' OR 
             `Book Title` LIKE '%$search%' OR 
@@ -19,6 +21,7 @@ if(isset($_POST['query'])){
             Place LIKE '%$search%' OR 
             ISBN LIKE '%$search%')";
 
+    // Append additional filtering conditions based on criteria
     if (!empty($criteria['subject'])) {
         $sql .= " AND Subject LIKE '%{$criteria['subject']}%'";
     }
@@ -31,28 +34,36 @@ if(isset($_POST['query'])){
         $sql .= " AND Publisher LIKE '%{$criteria['publisher']}%'";
     }
 
+    // Execute the SQL query
     $result = $conn->query($sql);
 
-    $books = array(); // Initialize an empty array to store books
+    // Initialize an array to store books
+    $books = array();
 
-    if($result->num_rows > 0){
-        while($row = $result->fetch_assoc()){
-            // Append each book as an associative array to the $books array
-            $books[] = array(
+    // Fetch and format the results
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            // Format each book data into an associative array
+            $book = array(
                 'Title' => $row['Book Title'],
                 'Author' => $row['Author'],
                 'Publisher' => $row['Publisher'],
                 'Place' => $row['Place'],
                 'ISBN' => $row['ISBN']
             );
+
+            // Add the formatted book data to the books array
+            $books[] = $book;
         }
     }
 
-    // Encode the $books array as JSON and output it
+    // Encode the books array as JSON and output it
     echo json_encode($books);
 } else {
-    echo json_encode(array()); // If no query is provided, output an empty array
+    // If no query is provided, output an empty array
+    echo json_encode(array());
 }
 
+// Close the database connection
 $conn->close();
 ?>
